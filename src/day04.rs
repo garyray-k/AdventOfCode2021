@@ -1,3 +1,6 @@
+use std::fmt::{self, write, format};
+use std::fmt::Write;
+
 use array2d::Array2D;
 use itertools::Itertools;
 
@@ -15,28 +18,54 @@ pub fn part2(input: String) {
 
 }
 
+#[derive(Debug)]
 struct BingoBoard {
     label: usize,
     board: Array2D<(bool, usize)> 
+}
+
+impl fmt::Display for BingoBoard {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let label = format!("label: {}", self.label);
+        let mut rows = String::new();
+        for row in self.board.rows_iter() {
+            write!(&mut rows, "{:?}\n", row.collect::<Vec<&(bool, usize)>>());
+        };
+        write!(f, "{}\n{}", label, rows)
+    }
 }
 
 fn parse_input(lines: Vec<&str>) {
     let mut lines = lines.iter();
     let callout_numbers = lines.next().expect("Failed to get the callout numbers.");
     let mut label = 0;
-    let mut row_counter = 0;
-    let boards: Vec<BingoBoard> = vec![];
+    let mut boards: Vec<BingoBoard> = vec![];
     lines.next(); // skip the first newline after callouts
+    let mut rows = vec![];
     while let Some(line) = lines.next() {
         if line.is_empty() {
-            row_counter = 0;
+            boards.push(
+                BingoBoard {
+                    label,
+                    board: Array2D::from_rows(&rows)
+                }
+            );
+            rows.clear();
             label += 1;
-            println!("-------------");
             continue;
         }
         let row: Vec<(bool, usize)> = line.split_whitespace().map(|x| {
             (false, x.parse::<usize>().unwrap())
         }).collect();
-        println!("{:?}", row);
+        rows.push(row);
+    }
+    boards.push(
+        BingoBoard {
+            label,
+            board: Array2D::from_rows(&rows)
+        }
+    );
+    for board in boards {
+        println!("{}", &board);
     }
 }
